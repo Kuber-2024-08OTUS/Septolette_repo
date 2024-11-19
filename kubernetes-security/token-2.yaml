@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  namespace: homework
+  name: cd-token-1-day
+  annotations:
+    kubernetes.io/service-account.name: cd
+    kubernetes.io/expiration: "86400"
+type: kubernetes.io/service-account-token
