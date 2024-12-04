@@ -1,0 +1,8 @@
+{{- if .Values.createStorageClass.create -}}
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .Values.createStorageClass.name }}
+provisioner: {{ .Values.createStorageClass.provisioner }}
+reclaimPolicy: {{ .Values.createStorageClass.reclaimPolicy }}
+{{- end }}
