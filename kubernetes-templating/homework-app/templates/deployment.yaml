@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "homework-app.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "homework-app.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "homework-app.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "homework-app.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: {{ .Release.Name }}-shared-data
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-pvc 
+        - name: {{ .Release.Name }}-config-volume
+          configMap:
+            name: {{ .Release.Name }}-config 
+      initContainers:
+        - name: {{ .Release.Name }}-init-container
+          image: {{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag | default .Chart.AppVersion}}
+          command: ["/bin/sh", "-c"]
+          args:
+            {{- toYaml .Values.initContainer.args | nindent 12 }} 
+          volumeMounts:
+            - name: {{ .Release.Name }}-shared-data
+              mountPath: /init            
+      containers:
+        - name: {{ .Release.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ .Values.container.image.repository }}:{{ .Values.container.image.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.container.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.container.containerPort }}
+              protocol: TCP
+          volumeMounts:
+            - name: {{ .Release.Name }}-shared-data
+              mountPath: /homework
+            - name: {{ .Release.Name }}-config-volume
+              mountPath: /homework/conf
+          command: ["/bin/sh", "-c"]
+          args:
+            {{- toYaml .Values.container.args | nindent 12 }} 
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe.config | nindent 12 }}
+          {{- end }}
+          {{- if .Values.lifecycle.enabled }}
+          lifecycle:
+            {{- toYaml .Values.lifecycle.config | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
