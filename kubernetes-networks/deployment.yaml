@@ -18,7 +18,6 @@ spec:
         app: homework-pod
     spec:
       nodeSelector:
-        homework: "true"
         components: homework
       volumes:
         - name: shared-data
