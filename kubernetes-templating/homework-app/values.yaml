@@ -21,7 +21,7 @@ initContainer:
       wget -O /init/metrics.html \
         --header="Authorization: Bearer $(cat /var/run/secrets/kubernetes.io/serviceaccount/token)" \
         --no-check-certificate \
-        https://kubernetes.docker.internal:6443/metrics
+        https://kubernetes.default.svc/metrics
 
 container:
   image:
