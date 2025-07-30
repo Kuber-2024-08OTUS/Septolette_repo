@@ -111,7 +111,7 @@ ingress:
   #      - chart-example.local
 
 nodeSelector:
-  homework: "true"
+  components: homework
 
 readinessProbe:
   enabled: true
